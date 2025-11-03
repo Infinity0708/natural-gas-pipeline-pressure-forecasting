@@ -14,3 +14,13 @@ Outcome: Finish the code in lstm-model-training.py
 Task: Meeting with supervisor and communicate next project steps.
 
 Outcome: Read the model report or essay about time series, and run the test data with the basic LSTM model first.
+
+### 2 Nov 2025
+Task: Start Working on the next step use LSTM basic model.
+
+Outcome: The debugging code is expected to be completed in the first week of November.
+
+### 3 Nov 2025
+Task: Define the LSTM-based regression model for time series prediction.
+
+Outcome: Update the code in lstm-model-training.py
