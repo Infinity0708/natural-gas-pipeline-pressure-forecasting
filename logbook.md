@@ -24,3 +24,17 @@ Outcome: The debugging code is expected to be completed in the first week of Nov
 Task: Define the LSTM-based regression model for time series prediction.
 
 Outcome: Update the code in lstm-model-training.py
+
+### 4 Nov 2025
+Task: Complete the time series functions and the prediction of loss function.
+
+Outcome: Start working on the time series issue.
+
+### 5 Nov 2025
+Task: Finish the first version of LSTM prediction model and debug the code and finally it can execute.
+Also, add loss function to analyze the difference between the image judgement model's predictions and actual data.
+
+Outcome: Convert the time series into supervised sliding-window samples, train a 2-layer LSTM regressor with strict time
+splits and separate scalers to avoid leakage, use early stopping and LR scheduling for stable training, evaluate in original 
+units (MPa) with RMSE/MAE/R², and save weights plus metadata for reproducible deployment
+
