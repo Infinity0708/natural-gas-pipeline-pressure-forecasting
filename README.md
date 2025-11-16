@@ -34,3 +34,17 @@ By analyzing multi-station time series data (pressure, temperature, flow rate, e
 
 
 ##  Project Structure
+xxc262/
+├── raw/
+│   └── raw.csv
+├── src/
+│   ├── best_model.pt
+│   ├── lstm-model-training.py
+│   ├── lstm-model-training-westline1.py
+│   ├── lstm_fixed_torch.pt
+│   ├── lstm_fixed_torch_metadata.pkl
+│   ├── optimized_lstm_torch.pt
+│   └── optimized_lstm_torch_metadata.pkl
+├── .gitignore
+├── logbook.md
+└── README.md

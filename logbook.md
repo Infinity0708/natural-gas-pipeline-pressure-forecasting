@@ -38,3 +38,25 @@ Outcome: Convert the time series into supervised sliding-window samples, train a
 splits and separate scalers to avoid leakage, use early stopping and LR scheduling for stable training, evaluate in original 
 units (MPa) with RMSE/MAE/R², and save weights plus metadata for reproducible deployment
 
+### 10 Nov 2025
+Code Interpretation:
+Batch size is the number of samples processed in one forward–backward pass.
+It controls memory usage, speed, and the noise level of the gradient:
+Larger batches → higher memory, fewer steps per epoch, smoother gradients, potentially larger learning rate. 
+Smaller batches → lower memory, noisier gradients (sometimes better generalization).
+
+### 13 Nov 2025
+Code Interpretation:
+Epoch: one full pass over the training dataset.
+In each epoch, the model processes all mini-batches, updates parameters,
+then we evaluate on the validation set.
+We use ReduceLROnPlateau to adjust the learning rate per epoch and early stopping to halt training when validation loss no longer improves.
+When we get the lowest val_loss is saved as best_model.pt.
+
+Why we have many epoch?
+Because it's necessary to tranverse the training set multiple times and continuosly adjust the parameters to achieve convergence.
+steps_per_epoch = ceil(N_train / batch_size)
+
+### 15 Nov 2025
+Task: Complete the main framework of the West Line1 prediction model and write the data processing script.
+Outcome: code interpretation and update

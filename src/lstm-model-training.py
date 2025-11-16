@@ -344,9 +344,9 @@ class OptimizedTorchLSTMForecast:
         df_clean = df_copy.dropna().reset_index(drop=True)
 
         # 【信息输出】显示数据处理结果
-        print(f"数据清洗后形状: {df_clean.shape}")
-        print(f"使用的特征数量: {len(all_feature_columns)}")
-        print(f"特征列表: {all_feature_columns}")
+        print(f"Shape after data cleaning: {df_clean.shape}") #数据清洗后形状
+        print(f"Number of features used: {len(all_feature_columns)}") #使用的特征数量
+        print(f"Feature list: {all_feature_columns}") #特征列表
 
         # ═══════════════════════════════════════════════════════════════
         # 数据准备
@@ -497,7 +497,7 @@ class OptimizedTorchLSTMForecast:
         self.model = LSTMRegressor(input_size).to(self.device)
         print(self.model)
         total_params = sum(p.numel() for p in self.model.parameters())
-        print(f"模型参数总数: {total_params:,}")
+        print(f"Total parameters: {total_params:,}")
         return self.model
 
     def train(self, train_loader, val_loader, epochs=30):
@@ -582,7 +582,7 @@ class OptimizedTorchLSTMForecast:
             model.train()  # 启用训练模式：dropout生效，BatchNorm更新统计量
             train_loss, train_mae = 0.0, 0.0  # 初始化训练指标累积器
 
-            # 遍历训练批次
+            # epoch :forward/backward propagation and update parameters in each batch
             for Xb, yb in train_loader:
                 # 【数据转移】将数据移动到GPU（如果可用）
                 Xb, yb = Xb.to(self.device), yb.to(self.device)
@@ -634,11 +634,7 @@ class OptimizedTorchLSTMForecast:
             val_loss /= len(val_loader.dataset)
             val_mae /= len(val_loader.dataset)
 
-            # ───────────────────────────────────────────────────────────
-            # 训练策略和监控
-            # ───────────────────────────────────────────────────────────
-
-            # 【学习率调度】根据验证损失调整学习率
+            # base on the validation set loss of this epoch to adjust learning rate
             # 如果验证损失plateau，自动降低学习率
             scheduler.step(val_loss)
 
@@ -967,6 +963,10 @@ if __name__ == '__main__':
 
     # 【模型构建】
     forecaster.build_model(input_size=n_feat)
+
+    print(">> sequence_length (L) =", forecaster.sequence_length)
+    print(">> input_size (F) =", forecaster.model.lstm1.input_size)
+    print(">> hidden sizes =", forecaster.model.lstm1.hidden_size, "and", forecaster.model.lstm2.hidden_size)
 
     # 【模型训练】
     print("\n开始训练修复后的模型...")
