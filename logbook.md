@@ -60,3 +60,7 @@ steps_per_epoch = ceil(N_train / batch_size)
 ### 15 Nov 2025
 Task: Complete the main framework of the West Line1 prediction model and write the data processing script.
 Outcome: code interpretation and update
+
+### 22 Nov 2025
+Task: Try using another prediction model- STGNN to predict the data.
+Outcome: From the model output find that the final prediction result was not good as the lstm model. Maybe need to fix the different parameters in the new model.
