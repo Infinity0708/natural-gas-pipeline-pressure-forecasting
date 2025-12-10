@@ -1,8 +1,55 @@
+LANG = 'en'  # 默认英文；命令行可 --lang en/zh 覆盖
+
+LABELS = {
+    'title_train_curve': {'en': 'Loss', 'zh': '损失变化'},
+    'title_mae_curve':   {'en': 'MAE',  'zh': 'MAE变化'},
+    'legend_train':      {'en': 'Train','zh': '训练'},
+    'legend_val':        {'en': 'Val',  'zh': '验证'},
+    'legend_true':       {'en': 'True', 'zh': '真实值'},
+    'legend_pred':       {'en': 'Pred', 'zh': '预测值'},
+    'title_ts':          {'en': 'Test Prediction (Time Series)', 'zh': '测试集预测结果对比-时间序列'},
+    'title_scatter':     {'en': 'Pred vs. True', 'zh': '预测值 vs 真实值'},
+    'title_residual':    {'en': 'Residual Analysis', 'zh': '残差分析'},
+    'title_hist':        {'en': 'Error Distribution', 'zh': '误差分布'},
+}
+def T(key: str) -> str:
+    return LABELS[key]['zh' if LANG == 'zh' else 'en']
+
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+plt.rcParams['axes.unicode_minus'] = False
+if LANG == 'zh':
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.sans-serif'] = [
+        'PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'STHeiti',
+        'Noto Sans CJK SC', 'Arial Unicode MS'
+    ]
+else:
+    plt.rcParams['font.family'] = 'DejaVu Sans'
+
+# 用于英文显示列名（不影响训练列名）
+COLNAME_DISPLAY = {
+    '西二线本站进站压力': 'W2 Inlet P',
+    '西二线上一站出站压力': 'W2 Upstream Outlet P',
+    '西二线上一站出站温度': 'W2 Upstream Temp',
+    '西三线本站进站压力': 'W3 Inlet P',
+    '西三线上一站出站压力': 'W3 Upstream Outlet P',
+    '西三线本站进站温度': 'W3 Station Temp',
+}
+def display_name(col: str) -> str:
+    return col if LANG == 'zh' else COLNAME_DISPLAY.get(col, col)
+
+from datetime import datetime
+def export_fig(fig, basename: str):
+    ts = datetime.now().strftime('%Y%m%d-%H%M%S')
+    suffix = 'zh' if LANG == 'zh' else 'en'
+    fname = f"fig_{basename}_{suffix}_{ts}.png"
+    fig.savefig(fname, dpi=180, bbox_inches='tight')
+    print("saved:", fname)
+
+
 import numpy as np  # 数值计算库，用于数组操作、数学运算
 import pandas as pd  # 数据分析库，用于读取CSV、数据预处理、时间序列处理
-
-import matplotlib.pyplot as plt  # 绘图库，用于绘制训练曲线、预测结果对比图
-import seaborn as sns  # 统计可视化库，基于matplotlib，提供更美观的图表
 
 from sklearn.preprocessing import MinMaxScaler  # 数据标准化，将特征缩放到[0,1]区间
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score  # 回归评估指标
@@ -20,7 +67,6 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau  # 学习率调度器，�
 # 【上下文管理】
 from contextlib import nullcontext  # 空上下文管理器，用于条件性启用混合精度训练
 
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']  # 设置中文字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
 
@@ -284,11 +330,11 @@ class OptimizedTorchLSTMForecast:
         # 【修复1】移除目标变量，只使用相关但独立的特征
         # 原理：使用上游和并行管线的数据预测本站压力，避免直接使用目标变量
         feature_columns = [
-            '西二线上一站出站压力',  # 上游压力，直接影响本站进站压力（物理因果关系）
+            '西二线上一站出站压力', # 上游压力，直接影响本站进站压力（物理因果关系）
             '西二线上一站出站温度',  # 上游温度，影响气体密度和流动特性
-            '西三线本站进站压力',  # 并行管线压力，可能存在系统性相关性
+            '西三线本站进站压力', # 并行管线压力，可能存在系统性相关性
             '西三线上一站出站压力',  # 西三线上游压力，系统整体状态指标
-            '西三线本站进站温度'  # 西三线温度，环境和系统状态指标
+            '西三线本站进站温度' # 西三线温度，环境和系统状态指标
         ]
 
         # ═══════════════════════════════════════════════════════════════
@@ -784,24 +830,24 @@ class OptimizedTorchLSTMForecast:
             yt, yp = y_true, y_pred
             idx = np.arange(len(yt))
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-        axes[0, 0].plot(idx, yt, label='真实值', color='blue', linewidth=1.5)
-        axes[0, 0].plot(idx, yp, label='预测值', color='red', linewidth=1.5)
-        axes[0, 0].set_title('测试集预测结果对比-时间序列');
+        axes[0, 0].plot(idx, yt, label='True Value', color='blue', linewidth=1.5)
+        axes[0, 0].plot(idx, yp, label='Predicted', color='red', linewidth=1.5)
+        axes[0, 0].set_title('Comparison of prediction results on the test set - time series');
         axes[0, 0].legend();
         axes[0, 0].grid(True, alpha=0.3)
         axes[0, 1].scatter(yt, yp, alpha=0.6, s=20, color='green')
         mn, mx = min(yt.min(), yp.min()), max(yt.max(), yp.max())
-        axes[0, 1].plot([mn, mx], [mn, mx], 'r--', linewidth=2, label='理想预测线');
+        axes[0, 1].plot([mn, mx], [mn, mx], 'r--', linewidth=2, label='Ideal Prediction Line');
         axes[0, 1].legend();
         axes[0, 1].grid(True, alpha=0.3)
         res = yp - yt
         axes[1, 0].scatter(yp, res, alpha=0.6, s=20, color='purple');
         axes[1, 0].axhline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 0].set_title('残差分析');
+        axes[1, 0].set_title('Residual Analysis');
         axes[1, 0].grid(True, alpha=0.3)
         axes[1, 1].hist(res, bins=50, alpha=0.7, color='orange', edgecolor='black');
         axes[1, 1].axvline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 1].set_title('误差分布');
+        axes[1, 1].set_title('Error Distribution');
         axes[1, 1].grid(True, alpha=0.3)
         rmse = np.sqrt(np.mean(res ** 2));
         mae = np.mean(np.abs(res));
