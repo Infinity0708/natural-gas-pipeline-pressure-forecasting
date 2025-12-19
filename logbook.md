@@ -60,3 +60,9 @@ steps_per_epoch = ceil(N_train / batch_size)
 ### 15 Nov 2025
 Task: Complete the main framework of the West Line1 prediction model and write the data processing script.
 Outcome: code interpretation and update
+
+### 20 Nov 2025
+### 28 Nov 2025
+### 5 Dec 2025
+### 10 Dec 2025 
+Task:Finish the first English version of LSTM model.

@@ -1,4 +1,4 @@
-LANG = 'en'  # 默认英文；命令行可 --lang en/zh 覆盖
+LANG = 'en'
 
 LABELS = {
     'title_train_curve': {'en': 'Loss', 'zh': '损失变化'},
@@ -39,13 +39,22 @@ COLNAME_DISPLAY = {
 def display_name(col: str) -> str:
     return col if LANG == 'zh' else COLNAME_DISPLAY.get(col, col)
 
+from pathlib import Path
 from datetime import datetime
-def export_fig(fig, basename: str):
+def export_fig(fig, basename: str, out_dir: Path = None):
+    from datetime import datetime
     ts = datetime.now().strftime('%Y%m%d-%H%M%S')
     suffix = 'zh' if LANG == 'zh' else 'en'
-    fname = f"fig_{basename}_{suffix}_{ts}.png"
+
+    if out_dir is None:
+        # 默认：项目根目录下的 figs/
+        out_dir = (Path(__file__).resolve().parent.parent / "figs")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    fname = out_dir / f"fig_{basename}_{suffix}_{ts}.png"
     fig.savefig(fname, dpi=180, bbox_inches='tight')
     print("saved:", fname)
+    plt.close(fig)
 
 
 import numpy as np  # 数值计算库，用于数组操作、数学运算
@@ -823,58 +832,78 @@ class OptimizedTorchLSTMForecast:
         return {'RMSE': rmse, 'MAE': mae, 'R²': r2}, y_true_org, y_pred_org
 
     def plot_test_comparison(self, y_true, y_pred, sample_size=500):
+        import numpy as np
         if len(y_true) > sample_size:
             idx = np.linspace(0, len(y_true) - 1, sample_size, dtype=int)
             yt, yp = y_true[idx], y_pred[idx]
         else:
             yt, yp = y_true, y_pred
             idx = np.arange(len(yt))
+
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-        axes[0, 0].plot(idx, yt, label='True Value', color='blue', linewidth=1.5)
-        axes[0, 0].plot(idx, yp, label='Predicted', color='red', linewidth=1.5)
-        axes[0, 0].set_title('Comparison of prediction results on the test set - time series');
-        axes[0, 0].legend();
+
+        # (0,0) 时间序列对比
+        axes[0, 0].plot(idx, yt, label=T('legend_true'), linewidth=1.5)
+        axes[0, 0].plot(idx, yp, label=T('legend_pred'), linewidth=1.5)
+        axes[0, 0].set_title(T('title_ts'))
+        axes[0, 0].legend()
         axes[0, 0].grid(True, alpha=0.3)
-        axes[0, 1].scatter(yt, yp, alpha=0.6, s=20, color='green')
+
+        # (0,1) 预测 vs 真实
+        axes[0, 1].scatter(yt, yp, alpha=0.6, s=20)
         mn, mx = min(yt.min(), yp.min()), max(yt.max(), yp.max())
-        axes[0, 1].plot([mn, mx], [mn, mx], 'r--', linewidth=2, label='Ideal Prediction Line');
-        axes[0, 1].legend();
+        axes[0, 1].plot([mn, mx], [mn, mx], 'r--', linewidth=2)
+        axes[0, 1].set_title(T('title_scatter'))
         axes[0, 1].grid(True, alpha=0.3)
+
+        # (1,0) 残差
         res = yp - yt
-        axes[1, 0].scatter(yp, res, alpha=0.6, s=20, color='purple');
+        axes[1, 0].scatter(yp, res, alpha=0.6, s=20)
         axes[1, 0].axhline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 0].set_title('Residual Analysis');
+        axes[1, 0].set_title(T('title_residual'))
         axes[1, 0].grid(True, alpha=0.3)
-        axes[1, 1].hist(res, bins=50, alpha=0.7, color='orange', edgecolor='black');
+
+        # (1,1) 残差分布
+        axes[1, 1].hist(res, bins=50, alpha=0.7, edgecolor='black')
         axes[1, 1].axvline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 1].set_title('Error Distribution');
+        axes[1, 1].set_title(T('title_hist'))
         axes[1, 1].grid(True, alpha=0.3)
-        rmse = np.sqrt(np.mean(res ** 2));
-        mae = np.mean(np.abs(res));
+
+        # 角标指标
+        rmse = np.sqrt(np.mean(res ** 2))
+        mae = np.mean(np.abs(res))
         r2 = 1 - np.sum(res ** 2) / np.sum((yt - np.mean(yt)) ** 2)
-        fig.text(0.02, 0.98, f'RMSE: {rmse:.4f}\nMAE: {mae:.4f}\nR²: {r2:.4f}', fontsize=12, va='top',
-                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
-        plt.tight_layout();
+        fig.text(0.02, 0.98, f'RMSE: {rmse:.4f}\nMAE: {mae:.4f}\nR²: {r2:.4f}',
+                 fontsize=12, va='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+
+        plt.tight_layout()
+        export_fig(fig, 'test_compare')  # 导出带 en/zh 后缀的图片
         plt.show()
 
     def plot_training(self):
         if not self.history or not self.history['loss']:
-            print("没有训练历史记录")
+            print("No training history.")
             return
+
         h = self.history
         fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+
         ep = range(1, len(h['loss']) + 1)
-        axes[0].plot(ep, h['loss'], 'b-', label='训练损失')
-        axes[0].plot(ep, h['val_loss'], 'r-', label='验证损失')
-        axes[0].set_title('损失变化');
-        axes[0].legend();
+
+        axes[0].plot(ep, h['loss'], 'b-', label=T('legend_train'))
+        axes[0].plot(ep, h['val_loss'], 'r-', label=T('legend_val'))
+        axes[0].set_title(T('title_train_curve'))
+        axes[0].legend()
         axes[0].grid(True, alpha=0.3)
-        axes[1].plot(ep, h['mae'], 'b-', label='训练MAE')
-        axes[1].plot(ep, h['val_mae'], 'r-', label='验证MAE')
-        axes[1].set_title('MAE变化');
-        axes[1].legend();
+
+        axes[1].plot(ep, h['mae'], 'b-', label=T('legend_train'))
+        axes[1].plot(ep, h['val_mae'], 'r-', label=T('legend_val'))
+        axes[1].set_title(T('title_mae_curve'))
+        axes[1].legend()
         axes[1].grid(True, alpha=0.3)
-        plt.tight_layout();
+
+        plt.tight_layout()
+        export_fig(fig, 'train_curve')  # 导出带 en/zh 后缀的图片
         plt.show()
 
     def save_model_with_metadata(self, filepath='optimized_lstm_torch.pt', metadata=None):
@@ -971,6 +1000,12 @@ class OptimizedTorchLSTMForecast:
                     break
         return self.history
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--lang', choices=['en','zh'], default=None, help='switch language for plots/labels')
+args, _ = parser.parse_known_args()
+if args.lang:
+    LANG = args.lang
 
 if __name__ == '__main__':
     """
