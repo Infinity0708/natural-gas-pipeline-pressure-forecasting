@@ -1,0 +1,17 @@
+{
+  "train": {
+    "sequence_length": 50,
+    "batch_size": 256,
+    "lr": 0.0035039438771092895,
+    "epochs": 50,
+    "patience": 7
+  },
+  "model": {
+    "hidden1": 64,
+    "hidden2": 64,
+    "dropout1": 0.2527365895130171,
+    "dropout2": 0.2542145605007988,
+    "dropout3": 0.014458712646945884,
+    "fc": 64
+  }
+}
