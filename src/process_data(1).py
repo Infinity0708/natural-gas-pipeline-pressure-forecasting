@@ -150,10 +150,14 @@ def process_data():
     print("正在计算各个指标...")
     
     # 辅助函数：获取某站点某类型的所有点位数据
-    def get_station_tags(station, signal_type_keyword):
+    def get_station_tags(station, signal_type_keyword, line=None):
         tags = []
         for _, row in points_df.iterrows():
-            if row['区域'] == station and signal_type_keyword in row['信号描述']:
+            if row['区域'] != station:
+                continue
+            if line is not None and row['线'] != line:
+                continue
+            if signal_type_keyword in row['信号描述']:
                 tags.append(row['点位号'])
         return tags
 
