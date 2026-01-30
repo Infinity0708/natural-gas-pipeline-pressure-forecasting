@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent  # 项目根目录 …/xxc262
 CONFIG = {
     "csv_path": str(ROOT / "raw" / "raw.csv"),
 
-    # 图里的节点（和下面的映射一一对应）
+    # 图里的节点（和下面的映射一一对应）.
     "nodes": ["西二线", "西三线"],
 
     # 每个节点的列名映射 —— 与 raw.csv 完全一致（逐字匹配）

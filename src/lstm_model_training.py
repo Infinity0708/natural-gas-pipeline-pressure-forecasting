@@ -1,4 +1,4 @@
-LANG = 'en'  # 默认英文；命令行可 --lang en/zh 覆盖
+LANG = 'en'
 
 LABELS = {
     'title_train_curve': {'en': 'Loss', 'zh': '损失变化'},
@@ -39,13 +39,23 @@ COLNAME_DISPLAY = {
 def display_name(col: str) -> str:
     return col if LANG == 'zh' else COLNAME_DISPLAY.get(col, col)
 
+from pathlib import Path
 from datetime import datetime
-def export_fig(fig, basename: str):
+def export_fig(fig, basename: str, out_dir: Path = None, close: bool = True):
+    from datetime import datetime
     ts = datetime.now().strftime('%Y%m%d-%H%M%S')
     suffix = 'zh' if LANG == 'zh' else 'en'
-    fname = f"fig_{basename}_{suffix}_{ts}.png"
+
+    if out_dir is None:
+        # 默认：项目根目录下的 figs/
+        out_dir = (Path(__file__).resolve().parent.parent / "figs")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    fname = out_dir / f"fig_{basename}_{suffix}_{ts}.png"
     fig.savefig(fname, dpi=180, bbox_inches='tight')
     print("saved:", fname)
+    if close:
+        plt.close(fig)
 
 
 import numpy as np  # 数值计算库，用于数组操作、数学运算
@@ -158,52 +168,28 @@ class LSTMRegressor(nn.Module):
     4. 参数量约13,000个：适中的模型复杂度，避免过拟合
     """
 
-    def __init__(self, input_size):
-        """
-        初始化LSTM回归模型
-
-        参数：
-        - input_size: 输入特征的维度数量
-
-        网络层初始化顺序：
-        1. 两层LSTM + 对应的LayerNorm和Dropout
-        2. 全连接层 + 激活函数 + 最终输出层
-        """
+    def __init__(self, input_size, hparams=None):
         super().__init__()
+        hparams = hparams or {}
+        h1 = hparams.get("hidden1", 64)
+        h2 = hparams.get("hidden2", 32)
+        d1 = hparams.get("dropout1", 0.2)
+        d2 = hparams.get("dropout2", 0.1)
+        d3 = hparams.get("dropout3", 0.1)
+        fc = hparams.get("fc", 16)
 
-        # ═══════════════════════════════════════════════════════════════
-        # 第一层LSTM - 序列特征提取层
-        # ═══════════════════════════════════════════════════════════════
-        self.lstm1 = nn.LSTM(
-            input_size=input_size,  # 输入特征维度
-            hidden_size=64,  # 隐藏状态维度，控制模型容量
-            batch_first=True  # 输入格式：(batch, seq, feature)
-        )
+        self.lstm1 = nn.LSTM(input_size=input_size, hidden_size=h1, batch_first=True)
+        self.norm1 = nn.LayerNorm(h1)
+        self.dropout1 = nn.Dropout(d1)
 
-        # 【归一化层】对LSTM输出进行归一化，稳定训练
-        self.norm1 = nn.LayerNorm(64)  # 对64维隐藏状态进行归一化
+        self.lstm2 = nn.LSTM(input_size=h1, hidden_size=h2, batch_first=True)
+        self.norm2 = nn.LayerNorm(h2)
+        self.dropout2 = nn.Dropout(d2)
 
-        # 【正则化层】防止过拟合，训练时随机丢弃20%的神经元
-        self.dropout1 = nn.Dropout(0.2)
-
-        # ═══════════════════════════════════════════════════════════════
-        # 第二层LSTM - 特征融合层
-        # ═══════════════════════════════════════════════════════════════
-        self.lstm2 = nn.LSTM(
-            input_size=64,  # 接收第一层LSTM的64维输出
-            hidden_size=32,  # 降维到32，减少参数量
-            batch_first=True
-        )
-        self.norm2 = nn.LayerNorm(32)  # 对32维隐藏状态进行归一化
-        self.dropout2 = nn.Dropout(0.1)  # 较小的dropout率，保留更多信息
-
-        # ═══════════════════════════════════════════════════════════════
-        # 全连接层 - 最终预测层
-        # ═══════════════════════════════════════════════════════════════
-        self.fc1 = nn.Linear(32, 16)  # 第一个全连接层：32 → 16
-        self.act = nn.ReLU()  # ReLU激活函数，引入非线性
-        self.dropout3 = nn.Dropout(0.1)  # 最后的正则化
-        self.out = nn.Linear(16, 1)  # 输出层：16 → 1（回归预测值）
+        self.fc1 = nn.Linear(h2, fc)
+        self.act = nn.ReLU()
+        self.dropout3 = nn.Dropout(d3)
+        self.out = nn.Linear(fc, 1)
 
     def forward(self, x):
         """
@@ -278,7 +264,7 @@ class OptimizedTorchLSTMForecast:
         print(f"数据形状: {df.shape}\n缺失值:\n{df.isnull().sum()}")
         return df
 
-    def prepare_data(self, df, target_column='西二线本站进站压力'):
+    def prepare_data(self, df, target_column='西二线本站进站压力', batch_size=128, test_batch_size=256):
         """
         数据预处理函数 - 深度学习数据准备详解
 
@@ -533,20 +519,20 @@ class OptimizedTorchLSTMForecast:
 
         print(f"训练/验证/测试样本: {len(X_train)}/{len(X_val)}/{len(X_test)}; 特征数: {X_train.shape[2]}")
 
-        train_loader = DataLoader(SequenceDataset(X_train, y_train), batch_size=128, shuffle=True)
-        val_loader = DataLoader(SequenceDataset(X_val, y_val), batch_size=128, shuffle=False)
-        test_loader = DataLoader(SequenceDataset(X_test, y_test), batch_size=256, shuffle=False)
+        train_loader = DataLoader(SequenceDataset(X_train, y_train), batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(SequenceDataset(X_val, y_val), batch_size=batch_size, shuffle=False)
+        test_loader = DataLoader(SequenceDataset(X_test, y_test), batch_size=test_batch_size, shuffle=False)
 
         return train_loader, val_loader, test_loader, X_test, y_test, len(all_feature_columns)
 
-    def build_model(self, input_size):
-        self.model = LSTMRegressor(input_size).to(self.device)
+    def build_model(self, input_size, hparams=None):
+        self.model = LSTMRegressor(input_size, hparams=hparams).to(self.device)
         print(self.model)
         total_params = sum(p.numel() for p in self.model.parameters())
         print(f"Total parameters: {total_params:,}")
         return self.model
 
-    def train(self, train_loader, val_loader, epochs=30):
+    def train(self, train_loader, val_loader, epochs=30, lr=0.002, patience=6, ckpt_path="best_model.pt"):
         """
         模型训练函数 - 深度学习训练循环详解
 
@@ -588,12 +574,7 @@ class OptimizedTorchLSTMForecast:
         model = self.model
 
         # 【优化器】Adam优化器，自适应学习率
-        optimizer = Adam(
-            model.parameters(),  # 模型参数
-            lr=0.002,  # 初始学习率
-            betas=(0.9, 0.999),  # 动量参数：β1控制梯度，β2控制梯度平方
-            eps=1e-7  # 数值稳定性参数
-        )
+        optimizer = Adam(model.parameters(), lr=lr, betas=(0.9,0.999), eps=1e-7)
 
         # 【学习率调度器】根据验证损失自动调整学习率
         scheduler = ReduceLROnPlateau(
@@ -612,7 +593,7 @@ class OptimizedTorchLSTMForecast:
 
         # 【早停机制】防止过拟合
         best_val = float('inf')  # 记录最佳验证损失
-        patience, waited = 6, 0  # 早停容忍度和等待计数器
+        waited = 0  # 早停容忍度和等待计数器
 
         # 【混合精度上下文】条件性启用自动混合精度
         autocast_ctx = torch.cuda.amp.autocast if self.amp_enabled else nullcontext
@@ -701,7 +682,7 @@ class OptimizedTorchLSTMForecast:
             # 【最佳模型保存】当验证损失改善时保存模型
             if val_loss < best_val - 1e-8:  # 1e-8是最小改善阈值，避免数值误差
                 best_val, waited = val_loss, 0  # 更新最佳损失，重置等待计数
-                torch.save(model.state_dict(), 'best_model.pt')  # 保存模型权重
+                torch.save(model.state_dict(), ckpt_path)  # 保存模型权重
                 print("保存最佳模型: best_model.pt")
             else:
                 # 【早停逻辑】验证损失未改善时增加等待计数
@@ -823,59 +804,80 @@ class OptimizedTorchLSTMForecast:
         return {'RMSE': rmse, 'MAE': mae, 'R²': r2}, y_true_org, y_pred_org
 
     def plot_test_comparison(self, y_true, y_pred, sample_size=500):
+        import numpy as np
         if len(y_true) > sample_size:
             idx = np.linspace(0, len(y_true) - 1, sample_size, dtype=int)
             yt, yp = y_true[idx], y_pred[idx]
         else:
             yt, yp = y_true, y_pred
             idx = np.arange(len(yt))
+
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-        axes[0, 0].plot(idx, yt, label='True Value', color='blue', linewidth=1.5)
-        axes[0, 0].plot(idx, yp, label='Predicted', color='red', linewidth=1.5)
-        axes[0, 0].set_title('Comparison of prediction results on the test set - time series');
-        axes[0, 0].legend();
+
+        # (0,0) 时间序列对比
+        axes[0, 0].plot(idx, yt, label=T('legend_true'), linewidth=1.5)
+        axes[0, 0].plot(idx, yp, label=T('legend_pred'), linewidth=1.5)
+        axes[0, 0].set_title(T('title_ts'))
+        axes[0, 0].legend()
         axes[0, 0].grid(True, alpha=0.3)
-        axes[0, 1].scatter(yt, yp, alpha=0.6, s=20, color='green')
+
+        # (0,1) 预测 vs 真实
+        axes[0, 1].scatter(yt, yp, alpha=0.6, s=20)
         mn, mx = min(yt.min(), yp.min()), max(yt.max(), yp.max())
-        axes[0, 1].plot([mn, mx], [mn, mx], 'r--', linewidth=2, label='Ideal Prediction Line');
-        axes[0, 1].legend();
+        axes[0, 1].plot([mn, mx], [mn, mx], 'r--', linewidth=2)
+        axes[0, 1].set_title(T('title_scatter'))
         axes[0, 1].grid(True, alpha=0.3)
+
+        # (1,0) 残差
         res = yp - yt
-        axes[1, 0].scatter(yp, res, alpha=0.6, s=20, color='purple');
+        axes[1, 0].scatter(yp, res, alpha=0.6, s=20)
         axes[1, 0].axhline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 0].set_title('Residual Analysis');
+        axes[1, 0].set_title(T('title_residual'))
         axes[1, 0].grid(True, alpha=0.3)
-        axes[1, 1].hist(res, bins=50, alpha=0.7, color='orange', edgecolor='black');
+
+        # (1,1) 残差分布
+        axes[1, 1].hist(res, bins=50, alpha=0.7, edgecolor='black')
         axes[1, 1].axvline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 1].set_title('Error Distribution');
+        axes[1, 1].set_title(T('title_hist'))
         axes[1, 1].grid(True, alpha=0.3)
-        rmse = np.sqrt(np.mean(res ** 2));
-        mae = np.mean(np.abs(res));
+
+        # 角标指标
+        rmse = np.sqrt(np.mean(res ** 2))
+        mae = np.mean(np.abs(res))
         r2 = 1 - np.sum(res ** 2) / np.sum((yt - np.mean(yt)) ** 2)
-        fig.text(0.02, 0.98, f'RMSE: {rmse:.4f}\nMAE: {mae:.4f}\nR²: {r2:.4f}', fontsize=12, va='top',
-                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
-        plt.tight_layout();
+        fig.text(0.02, 0.98, f'RMSE: {rmse:.4f}\nMAE: {mae:.4f}\nR²: {r2:.4f}',
+                 fontsize=12, va='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+
+        plt.tight_layout()
+        export_fig(fig, 'test_compare')  # 导出带 en/zh 后缀的图片
         plt.show()
 
-    def plot_training(self):
+    def plot_training(self, show=True):
         if not self.history or not self.history['loss']:
-            print("没有训练历史记录")
+            print("No training history.")
             return
+
         h = self.history
         fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+
         ep = range(1, len(h['loss']) + 1)
-        axes[0].plot(ep, h['loss'], 'b-', label='训练损失')
-        axes[0].plot(ep, h['val_loss'], 'r-', label='验证损失')
-        axes[0].set_title('损失变化');
-        axes[0].legend();
+
+        axes[0].plot(ep, h['loss'], 'b-', label=T('legend_train'))
+        axes[0].plot(ep, h['val_loss'], 'r-', label=T('legend_val'))
+        axes[0].set_title(T('title_train_curve'))
+        axes[0].legend()
         axes[0].grid(True, alpha=0.3)
-        axes[1].plot(ep, h['mae'], 'b-', label='训练MAE')
-        axes[1].plot(ep, h['val_mae'], 'r-', label='验证MAE')
-        axes[1].set_title('MAE变化');
-        axes[1].legend();
+
+        axes[1].plot(ep, h['mae'], 'b-', label=T('legend_train'))
+        axes[1].plot(ep, h['val_mae'], 'r-', label=T('legend_val'))
+        axes[1].set_title(T('title_mae_curve'))
+        axes[1].legend()
         axes[1].grid(True, alpha=0.3)
-        plt.tight_layout();
-        plt.show()
+
+        plt.tight_layout()
+        export_fig(fig, 'train_curve')  # 导出带 en/zh 后缀的图片
+        if show:
+            plt.show()
 
     def save_model_with_metadata(self, filepath='optimized_lstm_torch.pt', metadata=None):
         torch.save(self.model.state_dict(), filepath)
@@ -971,6 +973,12 @@ class OptimizedTorchLSTMForecast:
                     break
         return self.history
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--lang', choices=['en','zh'], default=None, help='switch language for plots/labels')
+args, _ = parser.parse_known_args()
+if args.lang:
+    LANG = args.lang
 
 if __name__ == '__main__':
     """

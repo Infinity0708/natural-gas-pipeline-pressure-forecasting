@@ -1,0 +1,16 @@
+{
+  "best_rmse": 0.017332016470513568,
+  "best_params": {
+    "sequence_length": 30,
+    "batch_size": 256,
+    "lr": 0.0027144789562883864,
+    "epochs": 50,
+    "patience": 8,
+    "hidden1": 256,
+    "hidden2": 64,
+    "dropout1": 0.31615734206297436,
+    "dropout2": 0.2840396579522493,
+    "dropout3": 0.1144287365952249,
+    "fc": 32
+  }
+}
