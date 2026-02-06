@@ -1,2 +1,2 @@
 model,target,lookback,horizon,alpha,test_mae,test_rmse,n_train_samples,n_test_samples,n_raw_features,n_flat_features
-Ridge,出站压力-连木沁压气站,24,1,1.0,0.14632634818553925,0.3107868802618815,6528,1380,29,696
+Ridge,出站压力-连木沁压气站,24,1,0.01,0.1505836844444275,0.32318763618340957,6528,1380,29,696
