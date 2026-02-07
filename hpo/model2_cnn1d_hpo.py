@@ -1,117 +1,126 @@
-# hpo/model2_cnn1d_hpo.py
-from __future__ import annotations
-import optuna
+import os
+import json
+import csv
+import subprocess
 from pathlib import Path
 
-from hpo.hpo_utils import make_run_dir, get_trial_dir, save_json, append_csv
-from src.model2_cnn1d_train import OptimizedTorchCNN1DForecast
-
-DATA_PATH_DEFAULT = Path(__file__).resolve().parent.parent / "raw" / "数据处理结果.csv"
-
-
-def objective(trial: optuna.Trial, run_dir: Path, csv_path: Path, target: str, horizon: int) -> float:
-    # ----- search space (similar style to your LSTM HPO) -----
-    lookback = trial.suggest_categorical("lookback", [12, 24, 48])
-    batch_size = trial.suggest_categorical("batch_size", [64, 128, 256])
-    lr = trial.suggest_float("lr", 1e-4, 3e-3, log=True)
-    epochs = trial.suggest_int("epochs", 30, 90, step=15)
-    patience = trial.suggest_int("patience", 8, 18)
-
-    hparams_model = {
-        "channels": trial.suggest_categorical("channels", [32, 64, 128]),
-        "kernel_size": trial.suggest_categorical("kernel_size", [3, 5, 7]),
-        "dropout": trial.suggest_float("dropout", 0.0, 0.4),
-    }
-
-    # fixed switches (keep same across trials for fair comparison)
-    include_target_lags = True
-    drop_compressor_states = False
-
-    # ----- per-trial directory -----
-    tdir = get_trial_dir(run_dir, trial.number)
-    ckpt = tdir / "best_model.pt"
-
-    # ----- train -----
-    forecaster = OptimizedTorchCNN1DForecast(lookback=lookback, horizon=horizon)
-    df = forecaster.load_and_analyze_data(csv_path, target_col=target)
-
-    train_loader, val_loader, test_loader, X_test, y_test, t_test, n_feat = forecaster.prepare_data(
-        df,
-        feature_cols=None,
-        drop_compressor_states=drop_compressor_states,
-        include_target_lags=include_target_lags,
-        batch_size=batch_size,
-        test_batch_size=256,
-    )
-
-    forecaster.build_model(n_feat, hparams=hparams_model)
-
-    forecaster.train(
-        train_loader,
-        val_loader,
-        epochs=epochs,
-        lr=lr,
-        patience=patience,
-        ckpt_path=str(ckpt),
-        use_amp=False,
-    )
-
-    # load best + eval
-    forecaster.model.load_state_dict(__import__("torch").load(ckpt, map_location="cpu"))
-    metrics, y_true, y_pred = forecaster.evaluate(test_loader, X_test, y_test, n_feat)
-
-    # ----- save trial artifacts -----
-    save_json(tdir / "hparams.json", {
-        "train": {"lookback": lookback, "horizon": horizon, "batch_size": batch_size, "lr": lr, "epochs": epochs, "patience": patience},
-        "model": hparams_model,
-        "data": {"csv": str(csv_path.resolve()), "target": target, "include_target_lags": include_target_lags, "drop_compressor_states": drop_compressor_states}
-    })
-    save_json(tdir / "metrics.json", metrics)
-
-    append_csv(run_dir / "trials.csv", {
-        "trial": trial.number,
-        "rmse": metrics["RMSE"],
-        "mae": metrics["MAE"],
-        "r2": metrics["R²"],
-        "lookback": lookback,
-        "horizon": horizon,
-        "batch_size": batch_size,
-        "lr": lr,
-        "epochs": epochs,
-        "patience": patience,
-        "channels": hparams_model["channels"],
-        "kernel_size": hparams_model["kernel_size"],
-        "dropout": hparams_model["dropout"],
-    })
-
-    # minimize RMSE
-    return metrics["RMSE"]
+import optuna
 
 
 def main():
     import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument("--csv", default=str(DATA_PATH_DEFAULT))
-    p.add_argument("--target", default="出站压力-连木沁压气站")
-    p.add_argument("--horizon", type=int, default=1)
-    p.add_argument("--trials", type=int, default=30)
-    args = p.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--csv", required=True)
+    ap.add_argument("--target", required=True)
+    ap.add_argument("--horizon", type=int, default=1)
+    ap.add_argument("--trials", type=int, default=30)
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--outdir", default="runs/model2_cnn1d/hpo")
+    ap.add_argument("--train_script", default="src/model2_cnn1d_training.py")
+    args = ap.parse_args()
 
-    run_dir = make_run_dir(model_tag="cnn1d", target_tag="outlet_p")
-    print("Run dir:", run_dir)
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
 
-    csv_path = Path(args.csv).resolve()
+    trials_csv = outdir / "trials.csv"
+    best_json = outdir / "best.json"
+
+    if not trials_csv.exists():
+        with open(trials_csv, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow([
+                "trial", "val_rmse",
+                "lookback", "lr", "dropout", "channels", "kernel_size", "batch_size",
+                "train_ratio", "val_ratio", "drop_compressor_states"
+            ])
+
+    def run_train(out_path: Path, params: dict) -> float:
+        cmd = [
+            os.environ.get("PYTHON", "python"),
+            args.train_script,
+            "--csv", args.csv,
+            "--target", args.target,
+            "--lookback", str(params["lookback"]),
+            "--horizon", str(args.horizon),
+            "--epochs", str(params["epochs"]),
+            "--patience", str(params["patience"]),
+            "--lr", str(params["lr"]),
+            "--dropout", str(params["dropout"]),
+            "--channels", str(params["channels"]),
+            "--kernel_size", str(params["kernel_size"]),
+            "--batch_size", str(params["batch_size"]),
+            "--train_ratio", str(params["train_ratio"]),
+            "--val_ratio", str(params["val_ratio"]),
+            "--seed", str(args.seed),
+            "--outdir", str(out_path),
+        ]
+        if params["drop_compressor_states"]:
+            cmd.append("--drop_compressor_states")
+
+        subprocess.check_call(cmd)
+
+        rep = json.load(open(out_path / "model2_cnn1d_report.json", "r", encoding="utf-8"))
+        return float(rep["metrics"]["val"]["rmse"])
+
+    def objective(trial: optuna.Trial):
+        params = {
+            "lookback": trial.suggest_categorical("lookback", [24, 48, 72]),
+            "lr": trial.suggest_float("lr", 1e-4, 3e-3, log=True),
+            "dropout": trial.suggest_float("dropout", 0.0, 0.4),
+            "channels": trial.suggest_categorical("channels", [32, 64, 128, 256]),
+            "kernel_size": trial.suggest_categorical("kernel_size", [3, 5, 7, 9]),
+            "batch_size": trial.suggest_categorical("batch_size", [64, 128, 256]),
+            "epochs": 100,
+            "patience": 20,
+            "train_ratio": 0.7,
+            "val_ratio": 0.1,
+            "drop_compressor_states": trial.suggest_categorical("drop_compressor_states", [False, True]),
+        }
+
+        trial_dir = outdir / f"trial_{trial.number:03d}"
+        trial_dir.mkdir(parents=True, exist_ok=True)
+
+        val_rmse = run_train(trial_dir, params)
+
+        with open(trials_csv, "a", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow([
+                trial.number, val_rmse,
+                params["lookback"], params["lr"], params["dropout"], params["channels"],
+                params["kernel_size"], params["batch_size"],
+                params["train_ratio"], params["val_ratio"], params["drop_compressor_states"]
+            ])
+
+        return val_rmse
 
     study = optuna.create_study(direction="minimize")
-    study.optimize(lambda t: objective(t, run_dir, csv_path, args.target, args.horizon), n_trials=args.trials)
+    study.optimize(objective, n_trials=args.trials)
 
-    save_json(run_dir / "best.json", {
-        "best_rmse": study.best_value,
-        "best_params": study.best_trial.params
-    })
+    best = {"best_value(val_rmse)": study.best_value, "best_params": study.best_params}
+    json.dump(best, open(best_json, "w", encoding="utf-8"), indent=2)
 
-    print("Best RMSE:", study.best_value)
-    print("Best params:", study.best_trial.params)
+    # final retrain into runs/model2_cnn1d (top folder with fixed artifact names)
+    final_out = Path("runs/model2_cnn1d")
+    final_out.mkdir(parents=True, exist_ok=True)
+
+    final_params = {
+        **study.best_params,
+        "epochs": 160,
+        "patience": 25,
+        "train_ratio": 0.7,
+        "val_ratio": 0.1,
+        "batch_size": study.best_params.get("batch_size", 128),
+        "drop_compressor_states": study.best_params.get("drop_compressor_states", False),
+    }
+
+    # ensure we pass the same set of keys used in run_train
+    val_rmse = run_train(final_out, final_params)
+
+    print("[OK] HPO finished.")
+    print("[OK] best.json:", best_json)
+    print("[OK] trials.csv:", trials_csv)
+    print("[OK] final artifacts saved to:", final_out)
+    print("[OK] final val_rmse:", val_rmse)
 
 
 if __name__ == "__main__":
