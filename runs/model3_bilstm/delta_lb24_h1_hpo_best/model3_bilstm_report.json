@@ -1,0 +1,51 @@
+{
+  "model": "BiLSTM",
+  "device": "mps",
+  "seed": 42,
+  "target": "出站压力-连木沁压气站",
+  "target_mode": "delta",
+  "lookback": 24,
+  "horizon": 1,
+  "split": {
+    "train_ratio": 0.7,
+    "val_ratio": 0.1,
+    "test_ratio": 0.20000000000000004
+  },
+  "n_features": 30,
+  "n_samples": {
+    "train": 6535,
+    "val": 933,
+    "test": 1868
+  },
+  "best_epoch": 1,
+  "best_val_rmse_scaled": 0.1091916486620903,
+  "hparams": {
+    "epochs": 60,
+    "lr": 0.0028492255,
+    "batch_size": 256,
+    "patience": 10,
+    "hidden": 64,
+    "layers": 1,
+    "dropout": 0.30007035,
+    "fc": 64,
+    "drop_compressor_states": false,
+    "include_target_lag": true
+  },
+  "metrics": {
+    "train": {
+      "rmse": 0.4056509733200073,
+      "mae": 0.061076417565345764,
+      "r2": 0.8916729831827371
+    },
+    "val": {
+      "rmse": 0.04718964919447899,
+      "mae": 0.02269858680665493,
+      "r2": 0.9956772811498821
+    },
+    "test": {
+      "rmse": 0.16242776811122894,
+      "mae": 0.03236756846308708,
+      "r2": 0.9201581415180247
+    }
+  }
+}

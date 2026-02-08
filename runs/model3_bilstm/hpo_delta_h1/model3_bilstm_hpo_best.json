@@ -1,0 +1,23 @@
+{
+  "best_value(val_rmse_abs)": 0.043423231691122055,
+  "best_params": {
+    "hidden": 64,
+    "layers": 1,
+    "dropout": 0.30007034864287563,
+    "fc": 64,
+    "lr": 0.0028492255035123164,
+    "batch_size": 256
+  },
+  "fixed": {
+    "target": "出站压力-连木沁压气站",
+    "target_mode": "delta",
+    "lookback": 24,
+    "horizon": 1,
+    "train_ratio": 0.7,
+    "val_ratio": 0.1,
+    "seed": 42,
+    "drop_compressor_states": false,
+    "include_target_lag": true
+  },
+  "feature_count": 30
+}
