@@ -1,0 +1,26 @@
+{
+  "best_value(val_rmse_abs)": 0.0428079217672348,
+  "best_params": {
+    "hidden": 256,
+    "layers": 3,
+    "dropout": 0.346060080225762,
+    "fc": 64,
+    "lr": 0.0006989267079433524,
+    "batch_size": 128,
+    "weight_decay": 8.25621836171605e-06,
+    "huber_beta": 1.817673135100328
+  },
+  "fixed_args": {
+    "target": "出站压力-连木沁压气站",
+    "target_mode": "delta",
+    "lookback": 24,
+    "horizon": 1,
+    "train_ratio": 0.7,
+    "val_ratio": 0.1,
+    "seed": 42,
+    "drop_compressor_states": false,
+    "include_target_lag": true,
+    "max_epochs": 60,
+    "patience": 10
+  }
+}
