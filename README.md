@@ -75,8 +75,6 @@ xxc262/
 │   ├── 数据处理结果.csv
 │   └── 需处理点位表.csv
 │
-├── run/
-│
 ├── runs/
 │   ├── lstm/
 │   ├── model1_ridge/

@@ -1,4 +1,3 @@
-# hpo/model4_lstm_hpo.py
 import os
 import sys
 import json
@@ -9,7 +8,6 @@ import numpy as np
 import torch
 import optuna
 
-# allow "from src..." when running from project root
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)

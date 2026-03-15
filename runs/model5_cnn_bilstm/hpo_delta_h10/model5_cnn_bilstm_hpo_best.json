@@ -1,0 +1,28 @@
+{
+  "best_value(val_rmse_scaled)": 0.23987837135791779,
+  "best_params": {
+    "channels": 128,
+    "kernel_size": 3,
+    "lstm_hidden": 64,
+    "lstm_layers": 2,
+    "dropout": 0.18555494104991527,
+    "fc": 128,
+    "lr": 0.0017759338587463869,
+    "batch_size": 256,
+    "weight_decay": 0.00017290388885428756
+  },
+  "fixed_args": {
+    "csv": "raw/数据处理结果.csv",
+    "target": "出站压力-连木沁压气站",
+    "target_mode": "delta",
+    "lookback": 24,
+    "horizon": 10,
+    "train_ratio": 0.7,
+    "val_ratio": 0.1,
+    "seed": 42,
+    "drop_compressor_states": false,
+    "include_target_lag": true,
+    "max_epochs": 60,
+    "patience": 10
+  }
+}

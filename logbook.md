@@ -59,7 +59,7 @@ steps_per_epoch = ceil(N_train / batch_size)
 
 ### 30 Dec 2025
 Obtain new pipeline data from the company I interned at.
-
+Gain some news and methods for my project.
 
 ## 10 Jan 2026
 Organised the repository into `raw/`, `src/`, `hpo/`, `runs/`, and supporting folders.
@@ -122,7 +122,7 @@ Created `model3_bilstm_hpo.py`.
 Run baseline and HPO-tuned BiLSTM in delta mode with target lag.
 Achieved short-horizon test performance comparable to CNN1D and LSTM.
 
-## 4 Mar 2026 - BiLSTM refinement attempt (negative result)
+## 1 Mar 2026 - BiLSTM refinement attempt but negative result
 Modified the BiLSTM code to:
 use absolute-space validation RMSE for early stopping,
 replace MSE with Huber loss (SmoothL1Loss),
@@ -138,7 +138,7 @@ Decision:
 keep the earlier BiLSTM configuration as the final BiLSTM result,
 document the refined variant explicitly as an unsuccessful but informative experiment.
 
-## 6 Mar 2026 - CNN-BiLSTM model
+## 4 Mar 2026 - CNN-BiLSTM model
 Implemented `model5_cnn_bilstm_train.py`.
 Combined temporal convolutions with a bidirectional recurrent stack.
 Implemented `model5_cnn_bilstm_hpo.py`.
@@ -146,7 +146,7 @@ Fixed Optuna search-space issues (e.g. valid log-scale bounds for weight decay).
 Run HPO and final training.
 Confirmed that the model performs competitively, with short-horizon RMSE in the same range as other delta-based neural models.
 
-## Entry 13 - Metrics interpretation and reporting logic
+## 5 Mar 2026
 Clarified the distinction between scaled-space metrics and original-scale metrics.
 Confirmed that the final reported MAE/RMSE/R^2 should be interpreted in the original physical scale after inverse transformation and delta reconstruction.
 Prepared textual justification for using MAE, RMSE, and R^2 together:
@@ -158,7 +158,7 @@ R^2 for overall fit relative to a baseline.
 Drafted a detailed project report.
 Rewrote the repository README to match the final structure and methodology.
 
-## 11 Mar 2026
+## 15 Mar 2026
 All major model families are implemented:
   - Ridge Regression
   - CNN1D
