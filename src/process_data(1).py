@@ -12,8 +12,8 @@ PROCESS_DIR = RAW_DATA_DIR
 
 RAW_DIRS = [RAW_DATA_DIR]
 
-POINT_LIST_FILE = os.path.join(PROCESS_DIR, "需处理点位表.csv")
-OUTPUT_FILE = os.path.join(PROCESS_DIR, "数据处理结果.csv")
+POINT_LIST_FILE = os.path.join(PROCESS_DIR, "unprocessed_station.csv")
+OUTPUT_FILE = os.path.join(PROCESS_DIR, "processed_data.csv")
 
 
 def load_file_map(directories):

@@ -5,7 +5,7 @@ import numpy as np
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RAW_DIR = os.path.join(PROJECT_ROOT, "raw")
 
-HOURLY_CSV = os.path.join(RAW_DIR, "数据处理结果.csv")
+HOURLY_CSV = os.path.join(RAW_DIR, "processed_data.csv")
 DAILY_XLSX = os.path.join(RAW_DIR, "西部管道能耗数据模型-天然气1月.xlsx")
 
 OUT_CSV = os.path.join(RAW_DIR, "day_dataset.csv")

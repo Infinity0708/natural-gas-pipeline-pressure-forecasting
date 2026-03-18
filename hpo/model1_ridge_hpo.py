@@ -39,7 +39,7 @@ def make_supervised_direct(df: pd.DataFrame, feature_cols, target_col: str,
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", default="raw/数据处理结果.csv")
+    ap.add_argument("--csv", default="raw/processed_data.csv")
     ap.add_argument("--target", default="出站压力-连木沁压气站")
     ap.add_argument("--horizon", type=int, default=1)
     ap.add_argument("--lookbacks", default="12,24,48")

@@ -1,4 +1,3 @@
-# src/model4_lstm_train.py
 import os
 import json
 import math
@@ -525,7 +524,7 @@ def train_main(args):
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", type=str, default="raw/数据处理结果.csv")
+    ap.add_argument("--csv", type=str, default="raw/processed_data.csv")
     ap.add_argument("--target", type=str, default="出站压力-连木沁压气站")
     ap.add_argument("--target_mode", type=str, choices=["abs", "delta"], default="delta")
     ap.add_argument("--lookback", type=int, default=24)

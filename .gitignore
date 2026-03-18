@@ -1,7 +1,7 @@
 # ignore the raw data
 raw/raw.csv
-raw/数据处理结果.csv
-raw/需处理点位表.csv
+raw/processed_data.csv
+raw/unprocessed_station.csv
 raw/天然气管存计算模型.xlsx
 raw/天然气西部管道周转量计算表2025年12月.xlsx
 raw/指标公式及问题说明（反馈）.xlsx

@@ -180,7 +180,7 @@ def main():
     import argparse
     ap = argparse.ArgumentParser()
 
-    ap.add_argument("--csv", default="raw/数据处理结果.csv")
+    ap.add_argument("--csv", default="raw/processed_data.csv")
     ap.add_argument("--target", default="出站压力-连木沁压气站")
     ap.add_argument("--lookback", type=int, default=24)
     ap.add_argument("--horizon", type=int, default=1)
