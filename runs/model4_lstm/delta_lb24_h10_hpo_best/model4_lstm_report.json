@@ -1,6 +1,6 @@
 {
   "model": "LSTM",
-  "csv": "raw/数据处理结果.csv",
+  "csv": "raw/processed_data.csv",
   "target": "出站压力-连木沁压气站",
   "target_mode": "delta",
   "lookback": 24,

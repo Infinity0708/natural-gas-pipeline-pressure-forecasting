@@ -158,7 +158,7 @@ R^2 for overall fit relative to a baseline.
 Drafted a detailed project report.
 Rewrote the repository README to match the final structure and methodology.
 
-## 15 Mar 2026
+## 20 Mar 2026
 All major model families are implemented:
   - Ridge Regression
   - CNN1D
