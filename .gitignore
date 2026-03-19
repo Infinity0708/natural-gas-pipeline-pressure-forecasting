@@ -1,5 +1,5 @@
 # ignore the raw data
-raw/raw.csv
 raw/processed_data.csv
 raw/unprocessed_station.csv
+raw/raw.csv
 raw/day_dataset.csv
