@@ -113,7 +113,7 @@ xxc262/
  A later BiLSTM refinement improved validation error but degraded test performance, and is retained as a documented negative result.
 
 ## Typical Run Flow
-1. Prepare the processed dataset in `raw/数据处理结果.csv`
+1. Prepare the processed dataset in `raw/processed_data.csv`
 2. Run HPO:
    python hpo/modelX_xxx_hpo.py ...
 3. Train final model with best parameters:
