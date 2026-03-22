@@ -74,7 +74,7 @@ Decided to build a single consolidated CSV for all forecasting models.
 ## 23 Jan 2026 - Data processing pipeline
 Developed the raw-data processing logic to read industrial CSVs and the point mapping table.
 Mapped station tags to engineered features such as inlet/outlet pressure, temperature, fuel-gas consumption, and compressor states.
-Constructed a processed hourly modelling dataset and exported it as `raw/数据处理结果.csv`.
+Constructed a processed hourly modelling dataset and exported it as `raw/processed_data.csv`.
 
 ## 28 Jan 2026 - Daily dataset construction
 Developed a separate `build_day_dataset.py` utility for daily-level aggregation.

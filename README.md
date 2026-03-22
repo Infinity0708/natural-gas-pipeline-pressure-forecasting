@@ -71,9 +71,8 @@ xxc262/
 │
 ├── raw/
 │   ├── raw.csv
-│   ├── day_dataset.csv
-│   ├── 数据处理结果.csv
-│   └── 需处理点位表.csv
+│   ├── processed_data.csv
+│   └── unprocessed_station.csv
 │
 ├── runs/
 │   ├── lstm/
@@ -84,7 +83,6 @@ xxc262/
 │   └── model5_cnn_bilstm/
 │
 ├── src/
-│   ├── build_day_dataset.py
 │   ├── process_data(1).py
 │   ├── model1_ridge_train.py
 │   ├── model2_cnn1d_train.py
