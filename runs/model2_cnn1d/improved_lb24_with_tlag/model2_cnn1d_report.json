@@ -1,0 +1,49 @@
+{
+  "model": "CNN1D",
+  "device": "mps",
+  "seed": 42,
+  "target": "\u51fa\u7ad9\u538b\u529b-\u8fde\u6728\u6c81\u538b\u6c14\u7ad9",
+  "lookback": 24,
+  "horizon": 1,
+  "split": {
+    "train_ratio": 0.7,
+    "val_ratio": 0.1,
+    "test_ratio": 0.20000000000000004
+  },
+  "n_features": 30,
+  "n_samples": {
+    "train": 6535,
+    "val": 933,
+    "test": 1868
+  },
+  "best_epoch": 6,
+  "best_val_rmse_scaled": 0.19560056424098554,
+  "hparams": {
+    "epochs": 120,
+    "lr": 0.0003,
+    "batch_size": 128,
+    "patience": 20,
+    "channels": 128,
+    "kernel_size": 7,
+    "dropout": 0.1,
+    "drop_compressor_states": false,
+    "include_target_lag": true
+  },
+  "metrics": {
+    "train": {
+      "rmse": 0.5569999739545888,
+      "mae": 0.26506394147872925,
+      "r2": 0.795759379863739
+    },
+    "val": {
+      "rmse": 0.24170992278469852,
+      "mae": 0.17520330846309662,
+      "r2": 0.8865897059440613
+    },
+    "test": {
+      "rmse": 0.8052320767184149,
+      "mae": 0.5243209004402161,
+      "r2": -0.9622402191162109
+    }
+  }
+}

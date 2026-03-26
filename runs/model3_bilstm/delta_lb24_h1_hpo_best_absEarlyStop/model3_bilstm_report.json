@@ -1,0 +1,57 @@
+{
+  "model": "BiLSTM",
+  "device": "mps",
+  "seed": 42,
+  "target": "出站压力-连木沁压气站",
+  "target_mode": "delta",
+  "lookback": 24,
+  "horizon": 1,
+  "split": {
+    "train_ratio": 0.7,
+    "val_ratio": 0.1,
+    "test_ratio": 0.20000000000000004
+  },
+  "n_features": 30,
+  "n_samples": {
+    "train": 6535,
+    "val": 933,
+    "test": 1868
+  },
+  "best_epoch": 38,
+  "best_val_rmse_abs": 0.04350782930850983,
+  "best_val_rmse_scaled": 0.10067232698202133,
+  "hparams": {
+    "epochs": 120,
+    "lr": 0.0006989267079433524,
+    "batch_size": 128,
+    "patience": 20,
+    "hidden": 256,
+    "layers": 3,
+    "dropout": 0.346060080225762,
+    "fc": 64,
+    "weight_decay": 8.25621836171605e-06,
+    "huber_beta": 1.817673135100328,
+    "drop_compressor_states": false,
+    "include_target_lag": true
+  },
+  "metrics": {
+    "train": {
+      "rmse": 0.25487208366394043,
+      "mae": 0.03299387916922569,
+      "r2": 0.9572362034746167,
+      "rmse_scaled": 0.5897459983825684
+    },
+    "val": {
+      "rmse": 0.04350782930850983,
+      "mae": 0.013371323235332966,
+      "r2": 0.9963254989917646,
+      "rmse_scaled": 0.10067232698202133
+    },
+    "test": {
+      "rmse": 0.19522078335285187,
+      "mae": 0.04092716798186302,
+      "r2": 0.8846647243783521,
+      "rmse_scaled": 0.4517194628715515
+    }
+  }
+}
