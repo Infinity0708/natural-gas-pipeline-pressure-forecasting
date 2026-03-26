@@ -1,4 +1,4 @@
 # ignore the raw data
+raw/processed_data.csv
+raw/unprocessed_station.csv
 raw/raw.csv
-src/stgnn_forecast.py
-src/stgnn_best.pt

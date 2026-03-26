@@ -57,10 +57,111 @@ Why we have many epoch?
 Because it's necessary to tranverse the training set multiple times and continuosly adjust the parameters to achieve convergence.
 steps_per_epoch = ceil(N_train / batch_size)
 
-### 15 Nov 2025
-Task: Complete the main framework of the West Line1 prediction model and write the data processing script.
-Outcome: code interpretation and update
+### 30 Dec 2025
+Obtain new pipeline data from the company I interned at.
+Gain some news and methods for my project.
 
-### 22 Nov 2025
-Task: Try using another prediction model- STGNN to predict the data.
-Outcome: From the model output find that the final prediction result was not good as the lstm model. Maybe need to fix the different parameters in the new model.
+## 10 Jan 2026
+Organised the repository into `raw/`, `src/`, `hpo/`, `runs/`, and supporting folders.
+Reviewed the available industrial files, including CSV time series and engineering spreadsheets.
+Confirmed that forecasting would focus on pressure-related variables rather than attempting a full mechanistic pipeline simulation.
+
+## 22 Jan 2026- Raw data inspection
+Inspected uploaded spreadsheet files and verified that they contain multiple worksheets and engineering formulas.
+Confirmed that the spreadsheets are suitable as engineering references but not ideal as direct modelling inputs.
+Decided to build a single consolidated CSV for all forecasting models.
+
+## 23 Jan 2026 - Data processing pipeline
+Developed the raw-data processing logic to read industrial CSVs and the point mapping table.
+Mapped station tags to engineered features such as inlet/outlet pressure, temperature, fuel-gas consumption, and compressor states.
+Constructed a processed hourly modelling dataset and exported it as `raw/processed_data.csv`.
+
+## 28 Jan 2026 - Daily dataset construction
+Developed a separate `build_day_dataset.py` utility for daily-level aggregation.
+Inspected Excel inputs and validated sheet names and structure.
+Confirmed that Python can read the uploaded `.xlsx` files once the required packages are installed.
+
+## 6 Feb 2026 - Ridge Regression baseline
+Implemented `model1_ridge_train.py`.
+Converted time series into flattened supervised windows.
+Trained 1-hour and 10-hour forecasting baselines.
+Saved metrics and forecast curves under `runs/model1_ridge/`.
+Established Ridge Regression as the simplest linear benchmark.
+
+## 10 Feb 2026 - CNN1D implementation
+Implemented `model2_cnn1d_train.py`.
+Added support for:
+configurable lookback and horizon,
+delta or absolute target,
+optional target-lag feature,
+optional removal of compressor-state features,
+standard artifact output (`.pt`, `.json`, `.png`, `.csv`).
+Added `model2_cnn1d_hpo.py` for Optuna-based tuning.
+Tested both absolute-target and delta-target versions.
+
+## 20 Feb 2026 - CNN1D key finding
+Observed that direct absolute-target forecasting produced poor generalisation on strict chronological splits.
+Introduced `target_mode=delta`, predicting pressure change instead of absolute pressure.
+Found that delta learning significantly improved short-horizon test performance.
+Performed ablations:
+with and without target lag,
+horizon = 1 and horizon = 10.
+Concluded that delta mode should be retained for neural models.
+
+## 25 Feb 2026 - LSTM model development
+Implemented `model4_lstm_train.py`.
+Added recurrent forecasting with configurable hidden size, layer count, dropout, learning rate, and batch size.
+Added `model4_lstm_hpo.py` for Optuna-based search.
+Run HPO and final training using the best parameter set.
+Generated checkpoint, report JSON, forecast curve, loss curve, and test prediction CSV.
+
+## 27 Feb 2026 - BiLSTM baseline
+Implemented `model3_bilstm_train.py`.
+Added bidirectional recurrent sequence modelling.
+Created `model3_bilstm_hpo.py`.
+Run baseline and HPO-tuned BiLSTM in delta mode with target lag.
+Achieved short-horizon test performance comparable to CNN1D and LSTM.
+
+## 1 Mar 2026 - BiLSTM refinement attempt but negative result
+Modified the BiLSTM code to:
+use absolute-space validation RMSE for early stopping,
+replace MSE with Huber loss (SmoothL1Loss),
+add weight decay,
+log both `val_rmse_abs` and `val_rmse_scaled`.
+Re-ran HPO with the updated objective.
+Result:
+validation RMSE improved strongly,
+but test RMSE became worse than the earlier BiLSTM run.
+Interpretation:
+the refined BiLSTM overfitted the validation segment and generalised less well to the held-out test period.
+Decision:
+keep the earlier BiLSTM configuration as the final BiLSTM result,
+document the refined variant explicitly as an unsuccessful but informative experiment.
+
+## 4 Mar 2026 - CNN-BiLSTM model
+Implemented `model5_cnn_bilstm_train.py`.
+Combined temporal convolutions with a bidirectional recurrent stack.
+Implemented `model5_cnn_bilstm_hpo.py`.
+Fixed Optuna search-space issues (e.g. valid log-scale bounds for weight decay).
+Run HPO and final training.
+Confirmed that the model performs competitively, with short-horizon RMSE in the same range as other delta-based neural models.
+
+## 5 Mar 2026
+Clarified the distinction between scaled-space metrics and original-scale metrics.
+Confirmed that the final reported MAE/RMSE/R^2 should be interpreted in the original physical scale after inverse transformation and delta reconstruction.
+Prepared textual justification for using MAE, RMSE, and R^2 together:
+MAE for typical error,
+RMSE for sensitivity to large deviations,
+R^2 for overall fit relative to a baseline.
+
+## 10 Mar 2026
+Drafted a detailed project report.
+Rewrote the repository README to match the final structure and methodology.
+
+## 20 Mar 2026
+All major model families are implemented:
+  - Ridge Regression
+  - CNN1D
+  - LSTM
+  - BiLSTM
+  - CNN-BiLSTM
