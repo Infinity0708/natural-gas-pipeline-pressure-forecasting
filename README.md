@@ -5,6 +5,14 @@ This repository contains an end-to-end forecasting workflow for natural gas pipe
 
 The main objective is to forecast short-horizon station pressure from multivariate hourly operational data, including throughput-related variables, station pressures, temperatures, fuel-gas consumption, and compressor-state indicators. The workflow also documents both successful and unsuccessful modelling iterations, with a strong emphasis on reproducibility.
 
+## Data Availability and Confidentiality
+
+This project was developed using real operational pipeline data obtained during an industrial collaboration. 
+The source data belong to the China National Pipeline Network and are subject to confidentiality restrictions. For this reason, the original raw files and certain processed datasets are stored locally on the machine and are not included in this repository.
+
+As a result, the repository contains the modelling code, experiment structure, and output artifacts, but it does not provide the full confidential dataset required to reproduce every experiment from scratch.
+The codebase is organised so that the training and evaluation workflow can be understood, inspected, and reused with appropriately formatted replacement data.
+
 ## Main Contributions
 Built a reusable data-processing pipeline to convert raw station records into a model-ready hourly table.
 Implemented and compared five forecasting model families:
@@ -117,6 +125,10 @@ xxc262/
 3. Train final model with best parameters:
    python src/modelX_xxx_train.py ...
 4. Review outputs under `runs/modelX_xxx/...`
+
+## Reproducibility Note
+Due to confidentiality restrictions, this repository is partially reproducible: the implementation, model structure, training workflow, and experiment outputs are included,
+but full end-to-end execution requires access to the restricted industrial dataset.
 
 ## Future Work
  Walk-forward validation under changing operating regimes.
