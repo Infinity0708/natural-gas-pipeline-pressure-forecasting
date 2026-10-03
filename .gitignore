@@ -2,3 +2,5 @@
 raw/processed_data.csv
 raw/unprocessed_station.csv
 raw/raw.csv
+.idea/
+.DS_Store
