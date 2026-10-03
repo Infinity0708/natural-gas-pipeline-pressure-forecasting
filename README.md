@@ -112,6 +112,17 @@ xxc262/
 ├── logbook.md
 └── .gitignore
 
+## Results
+
+| Model      | Horizon |       RMSE |        MAE |         R² |
+| ---------- | ------: | ---------: | ---------: | ---------: |
+| CNN1D      |      1h |     0.1635 |     0.0189 |     0.9191 |
+| LSTM       |      1h |      0.1617|     0.0163 |     0.9208 |
+| BiLSTM     |      1h |     0.1653 |     0.0337 |     0.9173 |
+| CNN-BiLSTM |      1h |     0.1632 |     0.0163 |     0.9194 |
+The LSTM achieved the best overall one-hour forecasting performance, while delta-target learning consistently improved robustness across neural models.
+
+
 ## Important Experimental Findings
  Absolute-target neural forecasting can fail under strict chronological evaluation.
  Delta-target forecasting is much more robust and became the default setting for neural models.
@@ -125,6 +136,17 @@ xxc262/
 3. Train final model with best parameters:
    python src/modelX_xxx_train.py ...
 4. Review outputs under `runs/modelX_xxx/...`
+
+## Project Highlights
+
+Real industrial pipeline data
+End-to-end preprocessing and forecasting workflow
+Five benchmark model families
+Optuna-based hyperparameter optimisation
+1-hour and 10-hour forecasting horizons
+Delta-target learning and target-lag features
+Chronological train/validation/test split
+Negative-result analysis and overfitting checks
 
 ## Reproducibility Note
 Due to confidentiality restrictions, this repository is partially reproducible: the implementation, model structure, training workflow, and experiment outputs are included,
